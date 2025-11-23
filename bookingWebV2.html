@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Hospitalidad - Costa de Ecuador</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .card h3 {
+            color: #764ba2;
+            margin: 20px 0 10px;
+            font-size: 1.3em;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .radar-container {
+            position: relative;
+            height: 500px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .accordion {
+            margin: 15px 0;
+        }
+
+        .accordion-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-header:hover {
+            opacity: 0.9;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .accordion-content.active {
+            max-height: 5000px;
+            padding: 20px;
+        }
+
+        .sentiment-section {
+            margin: 15px 0;
+        }
+
+        .positive-list, .negative-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .positive-list li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .negative-list li:before {
+            content: "✗ ";
+            color: #f44336;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .location-selector {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .location-btn {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .location-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .location-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+        }
+
+        .conclusion-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏖️ Dashboard de Hospitalidad - Costa de Ecuador</h1>
+            <p class="subtitle">Análisis Integral para Decisiones de Eventos y Conciertos</p>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('overview')">Visión General</button>
+            <button class="tab-btn" onclick="showTab('services')">Servicios</button>
+            <button class="tab-btn" onclick="showTab('sentiment')">Análisis de Sentimientos</button>
+            <button class="tab-btn" onclick="showTab('radar')">Comparativa Consolidada</button>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="card">
+                <h2>📊 Capacidad y Precios por Ubicación</h2>
+                <div class="chart-container">
+                    <canvas id="capacityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🏨 Hoteles por Playa</h2>
+                <div class="chart-container">
+                    <canvas id="beachHotelsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🌊 Distancias a Playas</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ubicación</th>
+                            <th>Playas Cercanas</th>
+                            <th>Distancia Media (m)</th>
+                            <th>Distancia Mínima (m)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="beachDistancesTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="services" class="tab-content">
+            <div class="card">
+                <h2>⭐ Calidad de Servicios por Ubicación</h2>
+                <div class="chart-container">
+                    <canvas id="servicesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="sentiment" class="tab-content">
+            <div class="card">
+                <h2>💭 Análisis de Sentimientos por Ubicación</h2>
+                <div id="sentimentAccordion" class="accordion"></div>
+            </div>
+        </div>
+
+        <div id="radar" class="tab-content">
+            <div class="card">
+                <h2>🎯 Comparativa Consolidada de Ubicaciones</h2>
+                <p style="margin-bottom: 20px;">Selecciona las ubicaciones que deseas comparar (máximo 5):</p>
+                <div class="location-selector" id="locationSelector"></div>
+                <div class="radar-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="conclusion-box">
+                    <h3>💡 Recomendación para Eventos</h3>
+                    <p><strong>Manta</strong> emerge como la ubicación más equilibrada para realizar eventos y conciertos, destacando por:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Alta capacidad hotelera (613,470 personas)</li>
+                        <li>Excelente calidad de servicios (rank_index: 4.16)</li>
+                        <li>Sentimiento positivo del 65-75%</li>
+                        <li>Buena cercanía a múltiples playas</li>
+                        <li>Precio competitivo ($62.07 promedio)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+  "CapacityAnalysis": {
+    "lugar": {"0": "Atacames", "1": "Ayampe", "2": "General Villamil", "3": "Manta", "4": "Montañita", "5": "Puerto López", "6": "Salinas"},
+    "MaxRoomCapacity": {"0": 237, "1": 77, "2": 472, "3": 726, "4": 305, "5": 261, "6": 452},
+    "RoomStock": {"0": 165, "1": 70, "2": 337, "3": 845, "4": 354, "5": 224, "6": 427},
+    "Capacity": {"0": 39105, "1": 5390, "2": 159064, "3": 613470, "4": 107970, "5": 58464, "6": 193004},
+    "price": {"0": 71.05, "1": 55.43, "2": 114.77, "3": 62.07, "4": 53.51, "5": 47.52, "6": 95.12}
+  },
+  "Services_analisis": {
+    "lugar": {"0": "Atacames", "1": "Ayampe", "2": "General Villamil", "3": "Manta", "4": "Montañita", "5": "Puerto López", "6": "Salinas"},
+    "essential_score": {"0": 5.76, "1": 5.67, "2": 6.11, "3": 6.43, "4": 5.44, "5": 5.94, "6": 6.22},
+    "premium_score": {"0": 4.29, "1": 2.19, "2": 3.20, "3": 2.12, "4": 3.65, "5": 2.71, "6": 3.07},
+    "rank_index": {"0": 4.11, "1": 3.87, "2": 4.27, "3": 4.16, "4": 4.11, "5": 4.16, "6": 4.23}
+  },
+  "beach_distances": {
+    "Atacames": {"n_beach_around": 1.67, "mean_distance_beaches": 3208.52, "min_distance_beach": 1926.57},
+    "Ayampe": {"n_beach_around": 1.95, "mean_distance_beaches": 1473.05, "min_distance_beach": 565.14},
+    "General Villamil": {"n_beach_around": 2.35, "mean_distance_beaches": 3869.47, "min_distance_beach": 1499.70},
+    "Manta": {"n_beach_around": 4.56, "mean_distance_beaches": 3896.97, "min_distance_beach": 1855.10},
+    "Montañita": {"n_beach_around": 2.79, "mean_distance_beaches": 2062.84, "min_distance_beach": 560.60},
+    "Puerto López": {"n_beach_around": 1.87, "mean_distance_beaches": 3858.96, "min_distance_beach": 1871.16},
+    "Salinas": {"n_beach_around": 4.86, "mean_distance_beaches": 2702.23, "min_distance_beach": 579.09}
+  }
+        };
+
+        // Capacity Chart
+        const capacityCtx = document.getElementById('capacityChart').getContext('2d');
+        const locations = Object.values(data.CapacityAnalysis.lugar);
+        const capacities = Object.values(data.CapacityAnalysis.Capacity);
+        const prices = Object.values(data.CapacityAnalysis.price);
+
+        new Chart(capacityCtx, {
+            type: 'bar',
+            data: {
+                labels: locations,
+                datasets: [{
+                    label: 'Capacidad Total (personas)',
+                    data: capacities,
+                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Precio Promedio ($)',
+                    data: prices,
+                    type: 'line',
+                    borderColor: 'rgba(244, 67, 54, 1)',
+                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                    borderWidth: 3,
+                    yAxisID: 'y1',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Capacidad (personas)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Precio Promedio ($)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Services Chart
+        const servicesCtx = document.getElementById('servicesChart').getContext('2d');
+        const essentialScores = Object.values(data.Services_analisis.essential_score);
+        const premiumScores = Object.values(data.Services_analisis.premium_score);
+        const rankIndexes = Object.values(data.Services_analisis.rank_index);
+
+        new Chart(servicesCtx, {
+            type: 'bar',
+            data: {
+                labels: locations,
+                datasets: [{
+                    label: 'Servicios Esenciales',
+                    data: essentialScores,
+                    backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    borderWidth: 2
+                }, {
+                    label: 'Servicios Premium',
+                    data: premiumScores,
+                    backgroundColor: 'rgba(255, 152, 0, 0.7)',
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    borderWidth: 2
+                }, {
+                    label: 'Índice de Ranking',
+                    data: rankIndexes,
+                    type: 'line',
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                    borderWidth: 3,
+                    yAxisID: 'y1',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Puntuación de Servicios'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Índice de Ranking'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Beach Distances Table
+        const beachTable = document.getElementById('beachDistancesTable');
+        Object.entries(data.beach_distances).forEach(([location, distances]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${location}</strong></td>
+                <td>${distances.n_beach_around.toFixed(1)}</td>
+                <td>${distances.mean_distance_beaches.toFixed(0)}</td>
+                <td>${distances.min_distance_beach.toFixed(0)}</td>
+            `;
+            beachTable.appendChild(row);
+        });
+
+        // Radar Chart
+        let radarChart = null;
+        const selectedLocations = new Set(['Manta']);
+
+        function normalizeValue(value, min, max) {
+            return ((value - min) / (max - min)) * 10;
+        }
+
+        function updateRadarChart() {
+            const selected = Array.from(selectedLocations);
+            
+            const datasets = selected.map((loc, idx) => {
+                const locIdx = locations.indexOf(loc);
+                const colors = [
+                    'rgba(102, 126, 234, 0.5)',
+                    'rgba(244, 67, 54, 0.5)',
+                    'rgba(76, 175, 80, 0.5)',
+                    'rgba(255, 152, 0, 0.5)',
+                    'rgba(156, 39, 176, 0.5)'
+                ];
+                
+                // Normalize metrics
+                const capacity = normalizeValue(capacities[locIdx], Math.min(...capacities), Math.max(...capacities));
+                const affordability = normalizeValue(120 - prices[locIdx], 120 - Math.max(...prices), 120 - Math.min(...prices));
+                const beachProximity = normalizeValue(2000 - data.beach_distances[loc].min_distance_beach, 
+                    2000 - Math.max(...Object.values(data.beach_distances).map(d => d.min_distance_beach)),
+                    2000 - Math.min(...Object.values(data.beach_distances).map(d => d.min_distance_beach)));
+                const serviceQuality = essentialScores[locIdx] * 1.5;
+                const sentiment = 7; // Placeholder
+                
+                return {
+                    label: loc,
+                    data: [capacity, affordability, beachProximity, serviceQuality, sentiment],
+                    backgroundColor: colors[idx],
+                    borderColor: colors[idx].replace('0.5', '1'),
+                    borderWidth: 2,
+                    pointRadius: 4
+                };
+            });
+
+            if (radarChart) {
+                radarChart.destroy();
+            }
+
+            const radarCtx = document.getElementById('radarChart').getContext('2d');
+            radarChart = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Capacidad Hotelera', 'Asequibilidad', 'Cercanía a Playa', 'Calidad de Servicios', 'Satisfacción'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Location selector
+        const locationSelector = document.getElementById('locationSelector');
+        locations.forEach(loc => {
+            const btn = document.createElement('button');
+            btn.className = 'location-btn' + (selectedLocations.has(loc) ? ' selected' : '');
+            btn.textContent = loc;
+            btn.onclick = function() {
+                if (selectedLocations.has(loc)) {
+                    selectedLocations.delete(loc);
+                    btn.classList.remove('selected');
+                } else if (selectedLocations.size < 5) {
+                    selectedLocations.add(loc);
+                    btn.classList.add('selected');
+                }
+                updateRadarChart();
+            };
+            locationSelector.appendChild(btn);
+        });
+
+        updateRadarChart();
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Beach Hotels Chart - Complete data
+        const beachHotelsCtx = document.getElementById('beachHotelsChart').getContext('2d');
+        
+        // Top beaches by hotel count
+        const topBeaches = [
+            {name: 'Playa Murciélago (Manta)', hotels: 120, price: 60.93, distance: 3244.73},
+            {name: 'Playa Tarqui (Manta)', hotels: 123, price: 61.37, distance: 3806.50},
+            {name: 'Playa Los Esteros (Manta)', hotels: 121, price: 59.69, distance: 4139.67},
+            {name: 'Playa Barbasquillo (Manta)', hotels: 115, price: 61.16, distance: 2653.48},
+            {name: 'Playa Piedra Larga (Manta)', hotels: 105, price: 61.49, distance: 5055.05},
+            {name: 'Playa de General Villamil', hotels: 56, price: 90.86, distance: 2511.96},
+            {name: 'Playa de Chipipe (Salinas)', hotels: 59, price: 83.37, distance: 1788.14},
+            {name: 'Playa de San Lorenzo (Salinas)', hotels: 62, price: 87.56, distance: 1040.39},
+            {name: 'Playa del Mar Bravo (Salinas)', hotels: 48, price: 88.40, distance: 2259.38},
+            {name: 'Playa Milina (Salinas)', hotels: 71, price: 91.89, distance: 2657.87}
+        ];
+
+        // --- normalización 0–1 para precio y distancia ---
+        const pricesRaw = topBeaches.map(b => b.price);
+        const distsRaw  = topBeaches.map(b => b.distance);
+
+        const minPrice = Math.min(...pricesRaw);
+        const maxPrice = Math.max(...pricesRaw);
+        const minDist  = Math.min(...distsRaw);
+        const maxDist  = Math.max(...distsRaw);
+
+        const priceNorm = pricesRaw.map(p => (p - minPrice) / (maxPrice - minPrice));
+        const distNorm  = distsRaw.map(d => (d - minDist) / (maxDist - minDist));
+
+        // -----------------------------------------------
+        new Chart(beachHotelsCtx, {
+            type: 'bar',
+            data: {
+                labels: topBeaches.map(b => b.name),
+                datasets: [
+                    {
+                        label: 'Número de Hoteles',
+                        data: topBeaches.map(b => b.hotels),
+                        backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        xAxisID: 'x'          // eje de hoteles
+                    },
+                    {
+                        label: 'Precio Promedio (normalizado)',
+                        data: priceNorm,
+                        type: 'line',
+                        borderColor: 'rgba(244, 67, 54, 1)',
+                        backgroundColor: 'rgba(244, 67, 54, 0.15)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        xAxisID: 'x1'         // eje superior 0–1
+                    },
+                    {
+                        label: 'Distancia Promedio (normalizada)',
+                        data: distNorm,
+                        type: 'line',
+                        borderColor: 'rgba(76, 175, 80, 1)',
+                        backgroundColor: 'rgba(76, 175, 80, 0.15)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        borderDash: [5, 5],
+                        xAxisID: 'x1'         // mismo eje 0–1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',  // barras horizontales
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    // Eje de categorías (las playas)
+                    y: {
+                        type: 'category',
+                        offset: true
+                    },
+                    // Eje inferior: número de hoteles
+                    x: {
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Número de Hoteles'
+                        },
+                        beginAtZero: true
+                    },
+                    // Eje superior: precio y distancia normalizados 0–1
+                    x1: {
+                        position: 'top',
+                        min: 0,
+                        max: 1,
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: (v) => v.toFixed(1)
+                        },
+                        title: {
+                            display: true,
+                            text: 'Precio / Distancia (normalizados 0–1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Detailed sentiment analysis data
+        const sentimentData = {
+            'Salinas': {
+                polarity: '58-65% Positivo, 8-12% Neutral, 25-32% Negativo',
+                positiveEmotions: [
+                    'Gratitud por la amabilidad del personal',
+                    'Alegría por ubicación frente al mar',
+                    'Tranquilidad por ambientes familiares',
+                    'Satisfacción con desayunos variados'
+                ],
+                negativeEmotions: [
+                    'Frustración por WiFi deficiente',
+                    'Molestia por ruido nocturno',
+                    'Decepción por limpieza inconsistente',
+                    'Estrés por problemas de agua y energía'
+                ],
+                differentiators: [
+                    'Ubicación frente al mar o a pasos del malecón',
+                    'Servicio cálido y personalizado',
+                    'Áreas comunes completas (piscinas, gimnasio, sauna)',
+                    'Desayunos sabrosos con opciones locales'
+                ],
+                painPoints: [
+                    'WiFi inestable o inexistente en habitaciones',
+                    'Ruido nocturno por música de bar/piscina',
+                    'Limpieza inconsistente (ropa de cama, insectos)',
+                    'Problemas de agua/energía sin generador'
+                ],
+                recommendations: [
+                    'Mejorar infraestructura WiFi con APs por planta',
+                    'Implementar política de volumen y horarios de silencio',
+                    'Programa de housekeeping con checklist visible',
+                    'Instalar UPS/generador para servicios críticos'
+                ],
+                conclusion: 'Salinas ofrece ubicación privilegiada y servicio cálido, pero debe atender WiFi, limpieza y control de ruido para elevar el NPS.'
+            },
+            'Montañita': {
+                polarity: '62-70% Positivo, 10-15% Neutral, 20-25% Negativo',
+                positiveEmotions: [
+                    'Gratitud por amabilidad de hosts (Nico, Omar, Silvana)',
+                    'Relajación por ubicación frente al mar',
+                    'Satisfacción por piscinas temperadas',
+                    'Placer gastronómico por desayunos a la carta',
+                    'Comodidad por habitaciones amplias con A/C'
+                ],
+                negativeEmotions: [
+                    'Frustración por ruido nocturno (fiestas, carretera)',
+                    'Molestia por limpieza deficiente en baños',
+                    'Incomodidad por mosquitos y mosquiteros defectuosos',
+                    'Irritación por problemas de agua caliente/A/C'
+                ],
+                differentiators: [
+                    'Acceso directo a la playa con vistas espectaculares',
+                    'Piscinas temperadas y áreas exteriores cuidadas',
+                    'Atención cálida de hosts con flexibilidad',
+                    'Desayunos a la carta de alta calidad'
+                ],
+                painPoints: [
+                    'Ruido nocturno y paredes de baja aislación',
+                    'Higiene inconsistente (baños, humedad)',
+                    'Mosquitos y mosquiteros defectuosos',
+                    'Accesos complicados (lodo, oscuridad)'
+                ],
+                recommendations: [
+                    'Mejorar insonorización con burletes y paneles',
+                    'Checklist reforzado de limpieza de baños',
+                    'Control integrado de plagas y mosquiteros',
+                    'Estandarizar agua caliente y presión'
+                ],
+                conclusion: 'Montañita destaca por playa, servicio y tranquilidad, pero necesita mejorar higiene, control de plagas y ruido.'
+            },
+            'Manta': {
+                polarity: '65-75% Positivo, 10-15% Neutral, 15-20% Negativo',
+                positiveEmotions: [
+                    'Satisfacción por amabilidad del personal',
+                    'Asombro por vistas al mar',
+                    'Tranquilidad por ambientes seguros',
+                    'Placer gastronómico por desayunos manabas'
+                ],
+                negativeEmotions: [
+                    'Frustración por ruido nocturno de bares',
+                    'Decepción por limpieza puntual (piscina, baños)',
+                    'Molestia por políticas y cobros poco claros',
+                    'Irritación por WiFi inestable'
+                ],
+                differentiators: [
+                    'Calidez y atención personalizada del personal',
+                    'Vistas al mar cerca del Mall del Pacífico',
+                    'Desayuno tradicional manaba de calidad',
+                    'Habitaciones modernas con A/C eficiente'
+                ],
+                painPoints: [
+                    'Ruido nocturno por eventos y construcción',
+                    'WiFi inestable y streaming lento',
+                    'Piscina cerrada o playa rocosa',
+                    'Políticas de cobro no transparentes'
+                ],
+                recommendations: [
+                    'Site survey WiFi y despliegue de APs adicionales',
+                    'Control de ruido con política clara',
+                    'Limpieza diaria de piscinas con bitácora',
+                    'Transparentar tarifas e impuestos'
+                ],
+                conclusion: 'Manta ofrece la mejor combinación de servicio, ubicación y capacidad, necesitando mejoras en WiFi y control de ruido.'
+            },
+            'Atacames': {
+                polarity: '60-70% Positivo, 10-15% Neutral, 20-30% Negativo',
+                positiveEmotions: [
+                    'Gratitud por amabilidad del personal',
+                    'Alegría por ubicación frente al mar',
+                    'Relajación y tranquilidad',
+                    'Satisfacción por desayuno y restaurante'
+                ],
+                negativeEmotions: [
+                    'Frustración por WiFi deficiente',
+                    'Molestia por ruido de discotecas',
+                    'Decepción por piscinas sucias',
+                    'Incomodidad por falta de agua caliente'
+                ],
+                differentiators: [
+                    'Ubicación frente al mar con acceso inmediato',
+                    'Calidez del personal y propietarios',
+                    'Piscinas amplias con espacios de descanso',
+                    'Desayuno y restaurante con excelente sazón'
+                ],
+                painPoints: [
+                    'WiFi deficiente y falta de Smart TV',
+                    'Ruido intenso de discotecas cercanas',
+                    'Piscinas pequeñas/sucias sin mantenimiento',
+                    'Fallas de A/C y generadores insuficientes'
+                ],
+                recommendations: [
+                    'Implementar red WiFi mallada robusta',
+                    'Política de silencio desde 22:00',
+                    'Filtración y recirculación de piscinas',
+                    'Dimensionar generador para carga crítica'
+                ],
+                conclusion: 'Atacames tiene excelente ubicación y personal, pero debe mejorar WiFi, ruido y mantenimiento de infraestructura.'
+            },
+            'Ayampe': {
+                polarity: '70-80% Positivo, 10-15% Neutral, 10-20% Negativo',
+                positiveEmotions: [
+                    'Tranquilidad por entorno natural',
+                    'Agradecimiento por atención personalizada',
+                    'Satisfacción por limpieza y seguridad',
+                    'Entusiasmo por vistas y acceso directo a playa'
+                ],
+                negativeEmotions: [
+                    'Frustración por ruido de carretera y gallos',
+                    'Molestia por mosquitos e insectos',
+                    'Decepción por olores de cañería',
+                    'Incomodidad por camas muy duras'
+                ],
+                differentiators: [
+                    'Ubicación privilegiada frente al mar',
+                    'Atención personalizada de anfitriones',
+                    'Entorno natural con jardines y hamacas',
+                    'Desayunos sabrosos con platos destacados'
+                ],
+                painPoints: [
+                    'Ruido de carretera, gallos y vecinos',
+                    'Mosquitos y mosquiteros defectuosos',
+                    'Camas muy duras y almohadas altas',
+                    'Problemas de agua (presión, temperatura)'
+                ],
+                recommendations: [
+                    'Plan de plomería: sellado y presión de agua',
+                    'Control integrado de plagas y mosquiteros',
+                    'Renovar colchones y lencería',
+                    'Implementar pagos con tarjeta'
+                ],
+                conclusion: 'Ayampe destaca por naturaleza y servicio, requiriendo mejoras en confort de camas, agua y control de plagas.'
+            },
+            'Puerto López': {
+                polarity: '65-75% Positivo, 10-15% Neutral, 15-25% Negativo',
+                positiveEmotions: [
+                    'Gratitud por trato excepcional del personal',
+                    'Relajación en ambientes tranquilos',
+                    'Asombro por vistas y atardeceres',
+                    'Satisfacción por desayunos caseros'
+                ],
+                negativeEmotions: [
+                    'Frustración por overbooking',
+                    'Molestia por ruido nocturno (bares, gallos)',
+                    'Incomodidad por falta de agua caliente',
+                    'Ansiedad por puertas sin seguro'
+                ],
+                differentiators: [
+                    'Atención personalizada y cálida',
+                    'Ubicación frente al mar o muy cerca',
+                    'Desayunos caseros con productos locales',
+                    'Diseño rústico-moderno con naturaleza'
+                ],
+                painPoints: [
+                    'Overbooking y reservas no respetadas',
+                    'Problemas de agua caliente y presión',
+                    'Ausencia de A/C o ventiladores ruidosos',
+                    'Ruido nocturno y paredes delgadas'
+                ],
+                recommendations: [
+                    'Protocolo anti-overbooking estricto',
+                    'Estandarizar agua caliente con presión',
+                    'Programa de mantenimiento de A/C',
+                    'Mejorar WiFi en habitaciones'
+                ],
+                conclusion: 'Puerto López ofrece servicio cálido y ubicación privilegiada, necesitando estandarizar confort básico y evitar overbooking.'
+            },
+            'General Villamil': {
+                polarity: '60-70% Positivo, 10-15% Neutral, 20-30% Negativo',
+                positiveEmotions: [
+                    'Tranquilidad por ubicación frente al mar',
+                    'Gratitud por amabilidad de anfitriones',
+                    'Satisfacción con limpieza en varias estancias',
+                    'Alegría por terrazas con hamacas'
+                ],
+                negativeEmotions: [
+                    'Frustración por cobros poco claros',
+                    'Molestia por deficiencias de mantenimiento',
+                    'Decepción por comida cara',
+                    'Ansiedad por accesos deteriorados'
+                ],
+                differentiators: [
+                    'Atención cálida y personalizada (trato familiar)',
+                    'Ubicación frente al mar con acceso directo',
+                    'Terrazas y hamacas para descanso',
+                    'Pet-friendly con trato a mascotas'
+                ],
+                painPoints: [
+                    'Falta de agua caliente o presión insuficiente',
+                    'Mantenimiento irregular (humedad, olores)',
+                    'Accesos viales deteriorados con lodo',
+                    'Cobros confusos y diferencias con Booking'
+                ],
+                recommendations: [
+                    'Instalar calentadores y reguladores de agua',
+                    'Impermeabilización y control de humedad',
+                    'Renovar colchones y eliminar camas ruidosas',
+                    'Transparentar cobros y respetar tarifa'
+                ],
+                conclusion: 'General Villamil tiene ubicación privilegiada y servicio familiar, requiriendo mejoras urgentes en infraestructura de agua y transparencia comercial.'
+            }
+        };
+
+        // Sentiment accordion with complete data
+        const sentimentAccordion = document.getElementById('sentimentAccordion');
+        
+        Object.entries(sentimentData).forEach(([location, data]) => {
+            const item = document.createElement('div');
+            item.className = 'accordion-item';
+            item.innerHTML = `
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <span><strong>${location}</strong> - ${data.polarity}</span>
+                    <span>▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="sentiment-section">
+                        <h3>😊 Emociones Positivas Predominantes</h3>
+                        <ul class="positive-list">
+                            ${data.positiveEmotions.map(e => `<li>${e}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="sentiment-section">
+                        <h3>😞 Emociones Negativas Recurrentes</h3>
+                        <ul class="negative-list">
+                            ${data.negativeEmotions.map(e => `<li>${e}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="sentiment-section">
+                        <h3>⭐ Diferenciadores Clave</h3>
+                        <ul class="positive-list">
+                            ${data.differentiators.map(d => `<li>${d}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="sentiment-section">
+                        <h3>⚠️ Puntos de Dolor (Pain Points)</h3>
+                        <ul class="negative-list">
+                            ${data.painPoints.map(p => `<li>${p}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="sentiment-section">
+                        <h3>💡 Recomendaciones Clave</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            ${data.recommendations.map(r => `<li style="margin: 8px 0;">→ ${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="conclusion-box">
+                        <h3>📋 Conclusión</h3>
+                        <p>${data.conclusion}</p>
+                    </div>
+                </div>
+            `;
+            sentimentAccordion.appendChild(item);
+        });
+
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+            header.querySelector('span:last-child').textContent = content.classList.contains('active') ? '▲' : '▼';
+        }
+    </script>
+</body>
+</html>
